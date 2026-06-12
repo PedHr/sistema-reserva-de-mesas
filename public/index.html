@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Hearth | Reservas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div id="flash-container" class="flash-container" aria-live="polite" aria-atomic="true"></div>
+
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-icon">◆</div>
+          <div>
+            <p class="brand-name">The Hearth</p>
+            <p class="brand-tag">Sistema de Reservas</p>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <button type="button" class="nav-item active" data-section="mapa">Mapa das mesas</button>
+          <button type="button" class="nav-item" data-section="reservas">Reservas</button>
+        </nav>
+
+        <div class="legend-card">
+          <p class="legend-title">Legenda</p>
+          <ul class="legend-list">
+            <li><span class="dot available"></span> Disponível</li>
+            <li><span class="dot reserved"></span> Reservada</li>
+            <li><span class="dot occupied"></span> Ocupada</li>
+          </ul>
+        </div>
+
+        <button id="open-reservation-cta" type="button" class="primary full-width">Nova reserva</button>
+      </aside>
+
+      <main class="content">
+        <header class="page-header">
+          <div>
+            <p class="eyebrow">Restaurante · Desenvolvimento Web III</p>
+            <h1 id="page-title">Mapa do salão</h1>
+            <p class="page-subtitle" id="page-subtitle">Clique em qualquer mesa para ver detalhes ou reservar.</p>
+          </div>
+          <button id="reload" type="button" class="ghost">Atualizar</button>
+        </header>
+
+        <section id="section-mapa" class="panel active">
+          <div id="mapa-mesas" class="floor-plan" aria-label="Mapa visual das mesas por localização"></div>
+        </section>
+
+        <section id="section-reservas" class="panel">
+          <div class="filters-card">
+            <h2>Filtros</h2>
+            <form id="filters-form" class="filters-grid">
+              <label>
+                Cliente
+                <input id="filter-cliente" type="text" placeholder="Nome do cliente" />
+              </label>
+              <label>
+                Mesa
+                <select id="filter-mesa">
+                  <option value="">Todas</option>
+                </select>
+              </label>
+              <label>
+                Data
+                <input id="filter-data" type="text" inputmode="numeric" placeholder="DD/MM/AAAA" maxlength="10" autocomplete="off" />
+              </label>
+              <label>
+                Status
+                <select id="filter-status">
+                  <option value="">Todos</option>
+                  <option value="reservado">Reservado</option>
+                  <option value="ocupado">Ocupado</option>
+                  <option value="finalizado">Finalizado</option>
+                  <option value="cancelado">Cancelado</option>
+                </select>
+              </label>
+              <div class="filters-actions">
+                <button type="submit" class="primary">Filtrar</button>
+                <button type="button" id="clear-filters" class="secondary">Limpar</button>
+              </div>
+            </form>
+          </div>
+
+          <div id="lista-reservas" class="reservation-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <div id="mesa-modal" class="modal hidden" aria-hidden="true">
+      <div class="modal-backdrop" data-close-mesa-modal></div>
+      <section class="modal-panel modal-panel-sm" role="dialog" aria-modal="true" aria-labelledby="mesa-modal-title">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">Detalhes da mesa</p>
+            <h2 id="mesa-modal-title">Mesa</h2>
+          </div>
+          <button type="button" class="icon-btn" data-close-mesa-modal aria-label="Fechar">×</button>
+        </div>
+        <div id="mesa-modal-body" class="mesa-details"></div>
+        <div class="form-actions">
+          <button type="button" id="mesa-reserve-btn" class="primary hidden">Reservar esta mesa</button>
+          <button type="button" class="secondary" data-close-mesa-modal>Fechar</button>
+        </div>
+      </section>
+    </div>
+
+    <div id="reserva-modal" class="modal hidden" aria-hidden="true">
+      <div class="modal-backdrop" data-close-reserva-modal></div>
+      <section class="modal-panel reserva-modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow" id="modal-eyebrow">Nova reserva</p>
+            <h2 id="modal-title">Confirmar reserva</h2>
+          </div>
+          <button type="button" class="icon-btn" data-close-reserva-modal aria-label="Fechar">×</button>
+        </div>
+
+        <ol class="reserva-steps" aria-label="Etapas da reserva">
+          <li class="step active" data-step="mesa"><span>1</span> Mesa</li>
+          <li class="step" data-step="horario"><span>2</span> Horário</li>
+          <li class="step" data-step="dados"><span>3</span> Dados</li>
+        </ol>
+
+        <form id="reserva-form" class="reservation-form">
+          <input type="hidden" id="reserva-id" />
+          <input type="hidden" id="numero-mesa" required />
+
+          <section class="form-section mesa-summary-card" id="mesa-summary-card">
+            <div class="mesa-summary-empty" id="mesa-summary-empty">
+              <p>Nenhuma mesa selecionada</p>
+              <span>Escolha uma mesa disponível no mapa abaixo</span>
+            </div>
+            <div class="mesa-summary-content hidden" id="mesa-summary-content">
+              <div class="mesa-summary-badge available">Disponível</div>
+              <div class="mesa-summary-main">
+                <p class="mesa-summary-number" id="mesa-summary-number">Mesa —</p>
+                <p class="mesa-summary-meta" id="mesa-summary-meta">—</p>
+              </div>
+              <button type="button" id="toggle-map-btn" class="ghost small-btn">Alterar mesa</button>
+            </div>
+          </section>
+
+          <section class="form-section mini-map-block" id="mini-map-block">
+            <div class="section-heading">
+              <p class="mini-map-label">Mapa do salão</p>
+              <span class="section-caption">Somente mesas verdes estão disponíveis</span>
+            </div>
+            <div id="mapa-mesas-modal" class="floor-plan floor-plan-compact" aria-label="Mapa compacto das mesas"></div>
+          </section>
+
+          <section class="form-section datetime-block">
+            <div class="section-heading">
+              <p class="field-group-label">Quando</p>
+              <span class="section-caption">Duração padrão de 1h30</span>
+            </div>
+            <div class="field-row">
+              <label>
+                Data
+                <input id="data-reserva" type="text" inputmode="numeric" placeholder="DD/MM/AAAA" maxlength="10" required autocomplete="off" />
+                <span class="field-hint">Ex.: 15/06/2026</span>
+              </label>
+              <label>
+                Horário
+                <select id="hora-reserva" required></select>
+                <span class="field-hint">Intervalos de 30 min</span>
+              </label>
+            </div>
+          </section>
+
+          <section class="form-section">
+            <div class="section-heading">
+              <p class="field-group-label">Detalhes</p>
+              <span class="section-caption">Informações do cliente</span>
+            </div>
+
+            <label>
+              Número de pessoas
+              <select id="quantidade-pessoas" required></select>
+            </label>
+
+            <div class="field-row">
+              <label>
+                Nome completo
+                <input id="nome-cliente" type="text" placeholder="Seu nome" required />
+              </label>
+              <label>
+                Telefone
+                <input id="telefone-cliente" type="tel" inputmode="numeric" placeholder="(11) 98765-4321" maxlength="15" required autocomplete="tel" />
+                <span class="field-hint">Celular ou fixo com DDD</span>
+              </label>
+            </div>
+
+            <label>
+              Observações
+              <textarea id="observacoes" rows="2" placeholder="Aniversário, preferência de local, etc. (opcional)"></textarea>
+            </label>
+          </section>
+
+          <footer class="modal-footer-sticky">
+            <button id="cancel-edit" type="button" class="secondary hidden">Cancelar edição</button>
+            <button type="submit" class="primary full-width-mobile">Confirmar reserva</button>
+          </footer>
+        </form>
+      </section>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
